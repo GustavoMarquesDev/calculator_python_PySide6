@@ -1,6 +1,5 @@
 from pathlib import Path
 import sys
-import os
 
 from PySide6.QtGui import QIcon
 import ctypes
@@ -42,7 +41,7 @@ if __name__ == '__main__':
     window.setWindowIcon(icon)
 
     # Info
-    info = Info('2.0 ^ 10.0 = 1024 ')
+    info = Info('sua conta')
     window.addWidgetVertical(info)
 
     # Dislay
@@ -51,7 +50,7 @@ if __name__ == '__main__':
     window.addWidgetVertical(display)
 
     # Grid Button
-    buttonsGrid = ButtonsGrid()
+    buttonsGrid = ButtonsGrid(display, info)
     window.verticalLayout.addLayout(buttonsGrid)
 
     # Executa a aplicação
