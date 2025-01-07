@@ -50,7 +50,7 @@ if __name__ == '__main__':
     window.addWidgetVertical(display)
 
     # Grid Button
-    buttonsGrid = ButtonsGrid(display, info)
+    buttonsGrid = ButtonsGrid(display, info, window)
     window.verticalLayout.addLayout(buttonsGrid)
 
     # Executa a aplicação

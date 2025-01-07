@@ -2,6 +2,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from components.display import Display
     from components.info import Info
+    from components.mainWindow import MainWindow
+
+import math
 
 from PySide6.QtWidgets import QPushButton, QGridLayout, QWidget
 from PySide6.QtCore import Slot
@@ -27,6 +30,7 @@ class ButtonsGrid(QGridLayout):
     def __init__(self,
                  display: 'Display',
                  info: 'Info',
+                 window: 'MainWindow',
                  parent: QWidget | None = None,
                  *args, **kwargs
                  ) -> None:
@@ -42,8 +46,9 @@ class ButtonsGrid(QGridLayout):
         ]
         self.display = display
         self.info = info
+        self.window = window
         self._equation = ''
-        self._equationInitialValue = 'Sua conta'
+        self._equationInitialValue = '...'
         self._left = None
         self._right = None
         self.operation = None
@@ -80,17 +85,24 @@ class ButtonsGrid(QGridLayout):
     def _connectButtonClicked(self, button: Button, slot: Slot):
         button.clicked.connect(slot)
 
-    # funcao que configura o botão para ser especial
+    # funcao que configura o botão para fazer ações
     def _configSpecialButton(self, button: Button):
         text = button.text()
 
         if text == 'C':
             self._connectButtonClicked(button, self._clear)  # type: ignore
 
-        if text in '+-*/':
+        if text == '◀':
+            self._connectButtonClicked(
+                button, self.display.backspace)  # type: ignore
+
+        if text in '+-*/^':
             self._connectButtonClicked(
                 button, self._makeSlot(self._operatorClicked, button)
             )
+
+        if text == '=':
+            self._connectButtonClicked(button, self._eq)  # type: ignore
 
     # funcao que cria o slot
     def _makeSlot(self, func, *args, **kwargs):
@@ -122,15 +134,74 @@ class ButtonsGrid(QGridLayout):
     def _operatorClicked(self, button: Button):
         buttonText = button.text()  # +-/*
         displaytext = self.display.text()  # numero da esquerda _left
-        self.display.clear()
+        self.display.clear()  # limpa o display
 
         # se clicar no operador antes de clicar em um número
         if not isValidNumber(displaytext) and self._left is None:
-            print("Nao eh valido")
+            self._showError("Digite um número antes")
             return
 
         if self._left is None:
-            self._left = displaytext
+            self._left = float(displaytext)
 
         self._op = buttonText
-        self.equation = f'{self._left} {self._op} ??'
+        self.equation = f'{self._left} {self._op} ...'
+
+    # função que executa a operação final do valor da direita com o =
+    def _eq(self):
+        displayText = self.display.text()
+
+        if not isValidNumber(displayText):
+            self._showError("Conta incompleta.")
+            return
+
+        self._right = float(displayText)
+        self.equation = f'{self._left} {self._op} {self._right}'
+        result = 'error'
+
+        try:
+            if '^' in self.equation and isinstance(self._left, float):
+                result = math.pow(self._left, self._right)
+            else:
+                result = eval(self.equation)
+
+        except ZeroDivisionError:
+            self._showError("Divisão por zero.")
+
+        except OverflowError:
+            self._showError("Resultado muito grande.")
+
+        self.display.clear()
+        self.info.setText(f'{self.equation} = {result}')
+        self._left = result
+        self._right = None
+
+        if result == 'error':
+            self._left = None
+
+    # função que mostra uma caixa de mensagem
+    def _showError(self, text):
+        msgBox = self.window.makeMessageBox()
+        msgBox.setText(text)
+        msgBox.setIcon(msgBox.Icon.Warning)
+        # msgBox.setInformativeText("""
+        # It is a long established fact that a reader will be distracted by the
+        # readable content of a page when looking at its layout. The point of using
+        # Lorem Ipsum is that it has a more-or-less normal distribution of letters,
+        # as opposed to using 'Content here, content here', making it look like
+        # readable English. Many desktop publishing packages and web page editors
+        # """)
+
+        # msgBox.setStandardButtons(
+        #     msgBox.StandardButton.Cancel |
+        #     msgBox.StandardButton.Ok |
+        #     msgBox.StandardButton.Save
+        # )
+
+        msgBox.exec()
+
+    def _showInfo(self, text):
+        msgBox = self.window.makeMessageBox()
+        msgBox.setText(text)
+        msgBox.setIcon(msgBox.Icon.Information)
+        msgBox.exec()

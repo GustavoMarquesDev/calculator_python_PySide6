@@ -1,7 +1,4 @@
-from PySide6.QtWidgets import (
-    QMainWindow, QWidget,
-    QVBoxLayout,
-)
+from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QMessageBox)
 
 
 class MainWindow(QMainWindow):
@@ -23,3 +20,7 @@ class MainWindow(QMainWindow):
 
     def addWidgetVertical(self, widget: QWidget):
         self.verticalLayout.addWidget(widget)
+
+    # metodo que cria uma caixa de mensagem
+    def makeMessageBox(self):
+        return QMessageBox(self)
