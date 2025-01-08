@@ -4,13 +4,15 @@ if TYPE_CHECKING:
     from components.info import Info
     from components.mainWindow import MainWindow
 
+
 import math
 
-from PySide6.QtWidgets import QPushButton, QGridLayout, QWidget
+from PySide6.QtWidgets import QPushButton, QGridLayout, QWidget, QApplication
 from PySide6.QtCore import Slot
 
 from components.variables import MEDIUM_FONT_SIZE
 from utils import isNumOrDot, isEmpty, isValidNumber
+from styles import setupTheme
 
 
 class Button(QPushButton):
@@ -32,6 +34,7 @@ class ButtonsGrid(QGridLayout):
                  info: 'Info',
                  window: 'MainWindow',
                  parent: QWidget | None = None,
+                 app: QApplication | None = None,
                  *args, **kwargs
                  ) -> None:
 
@@ -42,7 +45,7 @@ class ButtonsGrid(QGridLayout):
             ['7', '8', '9', '*'],
             ['4', '5', '6', '-'],
             ['1', '2', '3', '+'],
-            ['',  '0', '.', '='],
+            ['⇅',  '0', '.', '='],
         ]
         self.display = display
         self.info = info
@@ -52,6 +55,8 @@ class ButtonsGrid(QGridLayout):
         self._left = None
         self._right = None
         self.operation = None
+        self.app = app
+        self.tema = 'dark'
 
         self.equation = self._equationInitialValue
         self._makeGrid()
@@ -66,6 +71,7 @@ class ButtonsGrid(QGridLayout):
         self.info.setText(value)
 
     # funcao que cria meu grid e faz a ligação dos botões
+
     def _makeGrid(self):
         for rowNumber, rowData in enumerate(self._gridMask):
             for columnNumber, buttonText in enumerate(rowData):
@@ -104,6 +110,10 @@ class ButtonsGrid(QGridLayout):
         if text == '=':
             self._connectButtonClicked(button, self._eq)  # type: ignore
 
+        if text == '⇅':
+            self._connectButtonClicked(
+                button, self._changeTheme)  # type: ignore
+
     # funcao que cria o slot
     def _makeSlot(self, func, *args, **kwargs):
         @Slot(bool)
@@ -112,6 +122,7 @@ class ButtonsGrid(QGridLayout):
         return realSlot
 
     # funcao que insere o valor do botão no display
+
     def _insertButtonTextToDisplay(self, button: Button):
         buttonText = button.text()
         newDisplayValue = self.display.text() + buttonText
@@ -204,4 +215,16 @@ class ButtonsGrid(QGridLayout):
         msgBox = self.window.makeMessageBox()
         msgBox.setText(text)
         msgBox.setIcon(msgBox.Icon.Information)
+        msgBox.setWindowTitle('Warning')
         msgBox.exec()
+
+    # função que muda o tema
+    def _changeTheme(self):
+        if self.tema == 'dark':
+            setupTheme(self.app, theme='light')  # type: ignore
+            self.tema = 'light'
+        else:
+            setupTheme(self.app, theme='dark')  # type: ignore
+            self.tema = 'dark'
+
+        self._showInfo('Tema alterado para ' + self.tema)
