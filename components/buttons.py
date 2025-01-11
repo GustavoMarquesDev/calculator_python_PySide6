@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QPushButton, QGridLayout, QWidget, QApplication
 from PySide6.QtCore import Slot
 
 from components.variables import MEDIUM_FONT_SIZE
-from utils import isNumOrDot, isEmpty, isValidNumber
+from utils import isNumOrDot, isEmpty, isValidNumber, converToNumber
 from styles import setupTheme
 
 
@@ -51,7 +51,7 @@ class ButtonsGrid(QGridLayout):
         self.info = info
         self.window = window
         self._equation = ''
-        self._equationInitialValue = '...'
+        self._equationInitialValue = '0'
         self._left = None
         self._right = None
         self.operation = None
@@ -70,9 +70,13 @@ class ButtonsGrid(QGridLayout):
         self._equation = value
         self.info.setText(value)
 
-    # funcao que cria meu grid e faz a ligação dos botões
-
     def _makeGrid(self):
+        self.display.eqPressed.connect(self._eq)
+        self.display.delPressed.connect(self.display.backspace)
+        self.display.clearPressed.connect(self._clear)
+        self.display.inputPressed.connect(self._insertToDisplay)
+        self.display.operatorPressed.connect(self._configLeftOp)
+
         for rowNumber, rowData in enumerate(self._gridMask):
             for columnNumber, buttonText in enumerate(rowData):
                 button = Button(buttonText)
@@ -84,7 +88,7 @@ class ButtonsGrid(QGridLayout):
 
                 self.addWidget(button, rowNumber, columnNumber)
 
-                slot = self._makeSlot(self._insertButtonTextToDisplay, button)
+                slot = self._makeSlot(self._insertToDisplay, buttonText)
                 self._connectButtonClicked(button, slot)
 
     # funcao que liga o slot ao botão atraves de click
@@ -104,7 +108,7 @@ class ButtonsGrid(QGridLayout):
 
         if text in '+-*/^':
             self._connectButtonClicked(
-                button, self._makeSlot(self._operatorClicked, button)
+                button, self._makeSlot(self._configLeftOp, text)
             )
 
         if text == '=':
@@ -115,6 +119,7 @@ class ButtonsGrid(QGridLayout):
                 button, self._changeTheme)  # type: ignore
 
     # funcao que cria o slot
+    @Slot()  # type: ignore
     def _makeSlot(self, func, *args, **kwargs):
         @Slot(bool)
         def realSlot(_):
@@ -122,17 +127,17 @@ class ButtonsGrid(QGridLayout):
         return realSlot
 
     # funcao que insere o valor do botão no display
-
-    def _insertButtonTextToDisplay(self, button: Button):
-        buttonText = button.text()
-        newDisplayValue = self.display.text() + buttonText
+    @Slot()  # type: ignore
+    def _insertToDisplay(self, text):
+        newDisplayValue = self.display.text() + text
 
         if not isValidNumber(newDisplayValue):
             return
 
-        self.display.insert(buttonText)
+        self.display.insert(text)
 
     # funcao que limpa o display
+    @Slot()
     def _clear(self):
         self.equation = ''
         self._left = None
@@ -142,8 +147,8 @@ class ButtonsGrid(QGridLayout):
         self.display.clear()
 
     # funcao que faz a logica dos operadores
-    def _operatorClicked(self, button: Button):
-        buttonText = button.text()  # +-/*
+    @Slot()  # type: ignore
+    def _configLeftOp(self, text):
         displaytext = self.display.text()  # numero da esquerda _left
         self.display.clear()  # limpa o display
 
@@ -155,32 +160,32 @@ class ButtonsGrid(QGridLayout):
         if self._left is None:
             self._left = float(displaytext)
 
-        self._op = buttonText
+        self._op = text
         self.equation = f'{self._left} {self._op} ...'
 
     # função que executa a operação final do valor da direita com o =
+    @Slot()
     def _eq(self):
         displayText = self.display.text()
 
-        if not isValidNumber(displayText):
-            self._showError("Conta incompleta.")
+        if not isValidNumber(displayText) or self._left is None:
+            self._showError('Conta incompleta.')
             return
 
-        self._right = float(displayText)
+        self._right = converToNumber(displayText)
         self.equation = f'{self._left} {self._op} {self._right}'
         result = 'error'
 
         try:
-            if '^' in self.equation and isinstance(self._left, float):
+            if '^' in self.equation and isinstance(self._left, (float, int)):
                 result = math.pow(self._left, self._right)
+                result = converToNumber(str(result))
             else:
                 result = eval(self.equation)
-
         except ZeroDivisionError:
-            self._showError("Divisão por zero.")
-
+            self._showError('Divisão por zero.')
         except OverflowError:
-            self._showError("Resultado muito grande.")
+            self._showError('Essa conta não pode ser realizada.')
 
         self.display.clear()
         self.info.setText(f'{self.equation} = {result}')
@@ -194,7 +199,7 @@ class ButtonsGrid(QGridLayout):
     def _showError(self, text):
         msgBox = self.window.makeMessageBox()
         msgBox.setText(text)
-        msgBox.setIcon(msgBox.Icon.Warning)
+        msgBox.setIcon(msgBox.Icon.Critical)
         # msgBox.setInformativeText("""
         # It is a long established fact that a reader will be distracted by the
         # readable content of a page when looking at its layout. The point of using
@@ -226,5 +231,3 @@ class ButtonsGrid(QGridLayout):
         else:
             setupTheme(self.app, theme='dark')  # type: ignore
             self.tema = 'dark'
-
-        self._showInfo('Tema alterado para ' + self.tema)

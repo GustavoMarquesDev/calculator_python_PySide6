@@ -41,12 +41,12 @@ if __name__ == '__main__':
     window.setWindowIcon(icon)
 
     # Info
-    info = Info('sua conta')
+    info = Info('')
     window.addWidgetVertical(info)
 
     # Dislay
     display = Display()
-    display.setPlaceholderText("Digite algo")
+    display.setPlaceholderText("0")
     window.addWidgetVertical(display)
 
     # Grid Button
