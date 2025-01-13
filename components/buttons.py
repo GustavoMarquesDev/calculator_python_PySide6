@@ -71,8 +71,8 @@ class ButtonsGrid(QGridLayout):
         self.info.setText(value)
 
     def _makeGrid(self):
-        self.display.eqPressed.connect(self._eq)
-        self.display.delPressed.connect(self.display.backspace)
+        self.display.eqPressed.connect(self._configRightOp)
+        self.display.delPressed.connect(self._backspace)
         self.display.clearPressed.connect(self._clear)
         self.display.inputPressed.connect(self._insertToDisplay)
         self.display.operatorPressed.connect(self._configLeftOp)
@@ -112,7 +112,8 @@ class ButtonsGrid(QGridLayout):
             )
 
         if text == '=':
-            self._connectButtonClicked(button, self._eq)  # type: ignore
+            self._connectButtonClicked(
+                button, self._configRightOp)  # type: ignore
 
         if text == '⇅':
             self._connectButtonClicked(
@@ -135,6 +136,7 @@ class ButtonsGrid(QGridLayout):
             return
 
         self.display.insert(text)
+        self.display.setFocus()
 
     # funcao que limpa o display
     @Slot()
@@ -145,12 +147,14 @@ class ButtonsGrid(QGridLayout):
         self.operation = None
         self.equation = self._equationInitialValue
         self.display.clear()
+        self.display.setFocus()
 
     # funcao que faz a logica dos operadores
     @Slot()  # type: ignore
     def _configLeftOp(self, text):
         displaytext = self.display.text()  # numero da esquerda _left
         self.display.clear()  # limpa o display
+        self.display.setFocus()
 
         # se clicar no operador antes de clicar em um número
         if not isValidNumber(displaytext) and self._left is None:
@@ -160,12 +164,15 @@ class ButtonsGrid(QGridLayout):
         if self._left is None:
             self._left = float(displaytext)
 
+            if self._left.is_integer():
+                self._left = int(self._left)
+
         self._op = text
         self.equation = f'{self._left} {self._op} ...'
 
     # função que executa a operação final do valor da direita com o =
     @Slot()
-    def _eq(self):
+    def _configRightOp(self):
         displayText = self.display.text()
 
         if not isValidNumber(displayText) or self._left is None:
@@ -179,7 +186,7 @@ class ButtonsGrid(QGridLayout):
         try:
             if '^' in self.equation and isinstance(self._left, (float, int)):
                 result = math.pow(self._left, self._right)
-                result = converToNumber(str(result))
+                result = converToNumber(str(round(result, 2)))
             else:
                 result = eval(self.equation)
         except ZeroDivisionError:
@@ -191,9 +198,15 @@ class ButtonsGrid(QGridLayout):
         self.info.setText(f'{self.equation} = {result}')
         self._left = result
         self._right = None
+        self.display.setFocus()
 
         if result == 'error':
             self._left = None
+
+    @Slot()
+    def _backspace(self):
+        self.display.backspace()
+        self.display.setFocus()
 
     # função que mostra uma caixa de mensagem
     def _showError(self, text):
@@ -215,6 +228,7 @@ class ButtonsGrid(QGridLayout):
         # )
 
         msgBox.exec()
+        self.display.setFocus()
 
     def _showInfo(self, text):
         msgBox = self.window.makeMessageBox()
@@ -222,6 +236,7 @@ class ButtonsGrid(QGridLayout):
         msgBox.setIcon(msgBox.Icon.Information)
         msgBox.setWindowTitle('Warning')
         msgBox.exec()
+        self.display.setFocus()
 
     # função que muda o tema
     def _changeTheme(self):
@@ -231,3 +246,4 @@ class ButtonsGrid(QGridLayout):
         else:
             setupTheme(self.app, theme='dark')  # type: ignore
             self.tema = 'dark'
+        self.display.setFocus()
