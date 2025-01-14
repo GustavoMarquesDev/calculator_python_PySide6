@@ -5,7 +5,7 @@ from PySide6.QtGui import QIcon
 import ctypes
 from PySide6.QtWidgets import QApplication
 
-from components.variables import WINDOW_ICON_PATH
+from variables import WINDOW_ICON_PATH
 from components.mainWindow import MainWindow
 from components.display import Display
 from components.info import Info

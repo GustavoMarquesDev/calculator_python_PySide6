@@ -1,7 +1,7 @@
 import qdarkstyle
 from PySide6.QtWidgets import QApplication
 
-from components.variables import (
+from variables import (
     DARK_COLOR, DARKER_PRIMARY_COLOR, DARKEST_PRIMARY_COLOR, BACKGROUND_COLOR,
     SECONDARY_BACKGROUND_COLOR, HOVER_COLOR, BORDER_COLOR, PRESSED_COLOR
 )
@@ -18,7 +18,7 @@ qss = f"""
     }}
     QPushButton[cssClass="specialButton"]:pressed {{
         color: #fff;
-        background: {DARKEST_PRIMARY_COLOR};
+        background: {DARKEST_PRIMARY_COLOR}; 
     }}
 """
 

@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QLineEdit
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QKeyEvent
 
-from components.variables import BIG_FONT_SIZE, TEXT_MARGIN, MINIMUM_WIDTH
+from variables import BIG_FONT_SIZE, TEXT_MARGIN, MINIMUM_WIDTH
 from utils import isEmpty, isNumOrDot
 
 

@@ -10,7 +10,7 @@ import math
 from PySide6.QtWidgets import QPushButton, QGridLayout, QWidget, QApplication
 from PySide6.QtCore import Slot
 
-from components.variables import MEDIUM_FONT_SIZE
+from variables import MEDIUM_FONT_SIZE
 from utils import isNumOrDot, isEmpty, isValidNumber, converToNumber
 from styles import setupTheme
 
