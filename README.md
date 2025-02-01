@@ -1,4 +1,4 @@
-# Calculator Python with PySide6 e Qt
+# Calculator Python with PySide6 
  
 Esta é uma calculadora feita com python usando muitos elementos que as bibliotecas Qt e PySide tem para oferecer.
 
